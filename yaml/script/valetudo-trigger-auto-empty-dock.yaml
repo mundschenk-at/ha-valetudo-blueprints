@@ -1,0 +1,23 @@
+blueprint:
+  name: 'Valetudo: Trigger Auto-Empty Dock'
+  description: Tells the auto-empty dock to do its thing.
+  source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/script/valetudo-trigger-auto-empty-dock.yaml
+  domain: script
+  homeassistant:
+    min_version: 2022.6.0
+  input:
+    send_robot_command:
+        name: Send Vacuum Command
+        description: The "send vacuum command" script (taking an MQTT topic and payload as parameters).
+        selector:
+            entity:
+                domain: script
+                multiple: false
+sequence:
+  - service: !input send_robot_command
+    data:
+      mqtt_topic: AutoEmptyDockManualTriggerCapability/trigger/set
+      mqtt_payload: PERFORM
+
+mode: single
+icon: mdi:trash-can-outline
