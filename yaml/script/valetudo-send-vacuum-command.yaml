@@ -1,0 +1,50 @@
+blueprint:
+  name: 'Valetudo: Send Vacuum Command'
+  description: Sends a command to a vacuum robot running Valetudo
+  source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/script/valetudo-send-vacuum-command.yaml
+  domain: script
+  homeassistant:
+    min_version: 2022.6.0
+  input:
+    robot:
+        name: Robot
+        description: The MQTT handle of the robot.
+        selector:
+            text:
+                multiline: false
+    valetudo_mqtt_prefix:
+        name: Valetudo MQTT prefix
+        description: The MQTT prefix set in the Valetudo connectivity configuration.
+        default: valetudo
+        selector:
+            text:
+                multiline: false
+variables:
+    valetudo_prefix: !input valetudo_mqtt_prefix
+    robot_prefix: !input robot
+sequence:
+  - alias: Publish MQTT topic
+    service: mqtt.publish
+    data:
+      topic_template: '{{valetudo_prefix|trim}}/{{robot_prefix|trim}}/{{mqtt_topic|trim}}'
+      payload_template: '{{mqtt_payload|trim}}'
+fields:
+  mqtt_topic:
+    name: Topic
+    description: The MQTT topic (without the Valetudo and robot prefixes).
+    example: MapSegmentationCapability/clean/set
+    required: true
+    selector:
+      text:
+        multiline: false
+  mqtt_payload:
+    name: Payload
+    description: The MQTT payload.
+    default: null
+    example: '{}'
+    required: true
+    selector:
+      text:
+        multiline: true
+mode: parallel
+icon: mdi:robot-vacuum

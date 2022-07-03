@@ -1,0 +1,83 @@
+blueprint:
+  name: 'Valetudo: Clean Rooms'
+  description: Starts selected room cleaning using Valetudo
+  source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/script/valetudo-clean-rooms.yaml
+  domain: script
+  homeassistant:
+    min_version: 2022.6.0
+  input:
+    send_robot_command:
+        name: Send Vacuum Command
+        description: The "send vacuum command" script (taking an MQTT topic and payload as parameters).
+        selector:
+            entity:
+                domain: script
+                multiple: false
+    robot_map_segments:
+        name: Robot Map Segments
+        description: The entity containing the robot map segments.
+        selector:
+            entity:
+                domain: sensor
+                integration: mqtt
+                multiple: false
+variables:
+  segments_entity: !input robot_map_segments
+  segment_id: >-
+      {% set ns = namespace(segments2id=[]) %}
+      {% for attr in states[segments_entity].attributes -%}
+        {% if is_number( attr ) %}
+           {% set ns.segments2id = ns.segments2id + [ '"'~states[segments_entity].attributes[attr]~'":"'~attr~'"' ] %}
+        {%- endif %}
+      {%- endfor %}
+      {{('{'~ns.segments2id|join(',')~'}')|from_json}}
+  segment_name: >-
+      {% set ns = namespace(id2segments=[]) %}
+      {% for attr in states[segments_entity].attributes -%}
+        {% if is_number( attr ) %}
+             {% set ns.id2segments = ns.id2segments + [ '"'~attr~'":"'~states[segments_entity].attributes[attr]~'"' ] %}
+        {%- endif %}
+      {%- endfor %}
+      {{('{'~ns.id2segments|join(',')~'}')|from_json}}
+sequence:
+  - service: !input send_robot_command
+    data:
+      mqtt_topic: MapSegmentationCapability/clean/set
+      mqtt_payload: >-
+        {%- set ns = namespace(ids=[]) %}
+        {% for room in ( segments|default('')|string ).split(',')|map('trim') -%}
+          {% if segment_id[room] is defined and is_number( segment_id[room] ) -%}
+              {% set ns.ids = ns.ids + [segment_id[room]] %}
+          {%- endif %}
+        {%- endfor %}
+        {%- set payload = {"segment_ids": ns.ids, "iterations": iterations|default(1)|int, "customOrder": custom_order|default(true)} %}
+        {{payload|to_json}}
+fields:
+  segments:
+    name: Rooms
+    description: The names of the rooms to be cleaned (separated by commas). Unknown rooms will be ignored.
+    required: true
+    example: Bathroom, Kitchen
+    selector:
+      text:
+        multiline: false
+  iterations:
+    name: Iterations
+    description: The number of cleaning iterations per room.
+    default: 1
+    required: true
+    selector:
+      number:
+        min: 1
+        max: 4
+  custom_order:
+    name: Keep room ordering.
+    description: The robot should follow the given room ordering during cleaning.
+    advanced: true
+    default: true
+    required: true
+    selector:
+      boolean:
+
+mode: queued
+icon: mdi:robot-vacuum
