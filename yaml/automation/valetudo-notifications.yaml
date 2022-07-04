@@ -1,0 +1,109 @@
+blueprint:
+  name: 'Valetudo: Notifications'
+  description: Sends a notification after a successful clean-up run and on error.
+  source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/automation/valetudo-notifications.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2022.6.0
+  input:
+    vacuum:
+        name: Vacuum Robot
+        description: The vacuum robot entity.
+        selector:
+            entity:
+                domain: vacuum
+                integration: mqtt
+                multiple: false
+    rendered_map:
+        name: Rendered Map
+        description: The vacuum map rendered as a PNG image.
+        selector:
+            entity:
+                domain: camera
+                integration: mqtt
+                multiple: false
+    error_message:
+        name: Error Message
+        description: The sensor containing the last error message.
+        selector:
+            entity:
+                domain: sensor
+                integration: mqtt
+                multiple: false
+    notify_device:
+        name: Notification Device(s)
+        description: The notified device(s).
+        default: false
+        selector:
+          device:
+            integration: mobile_app
+            multiple: true
+    notify_group:
+      name: Notification Group
+      description: "The name of the notification group to call. ('notify' for all devices)"
+      default: ""
+
+trigger_variables:
+  rendered_map: !input rendered_map
+  error_message: !input error_message
+  notify_device: !input notify_device
+  group_target: !input notify_group
+
+trigger:
+  - platform: state
+    entity_id: !input vacuum
+    from: cleaning
+    to: returning
+    id: cleaning_finished
+    variables:
+      message: "Cleaning task succeeded at {{ now().strftime('%-H:%M') }}."
+  - platform: state
+    entity_id: !input vacuum
+    to: error
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: error
+    variables:
+      message: >-
+        The robot has encountered an issue:
+        {{ states( error_message ) }}
+condition:
+  - condition: or
+    alias: "Finished cleaning task or error message is not empty"
+    conditions:
+    - condition: trigger
+      id: cleaning_finished
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: !input error_message
+          state: ''
+
+variables:
+  title: Vacuum
+  message: "{{ message | default('Everything is working fine.') }}"
+  data:
+    entity_id: "{{ rendered_map | default(none) }}"
+    priority: high
+
+action:
+  - choose:
+    - conditions: "{{ not group_target }}"
+      sequence:
+        - domain: mobile_app
+          type: notify
+          device_id: !input notify_device
+          title: "{{ title }}"
+          message: "{{ message }}"
+          data: "{{ data }}"
+    - conditions: "{{ group_target is defined }}"
+      sequence:
+      - service: notify.{{ group_target }}
+        data:
+          title: "{{ title }}"
+          message: "{{ message }}"
+          data: "{{ data }}"
+
+mode: queued
