@@ -42,12 +42,33 @@ blueprint:
       name: Notification Group
       description: "The name of the notification group to call. ('notify' for all devices)"
       default: ""
+    language:
+      name: Language
+      description: The language used for the notifications.
+      default: English
+      selector:
+        select:
+          options:
+            - English
+            - German
 
 trigger_variables:
-  rendered_map: !input rendered_map
-  error_message: !input error_message
+  rendered_map_sensor: !input rendered_map
+  error_message_sensor: !input error_message
   notify_device: !input notify_device
   group_target: !input notify_group
+  language: !input language
+  strings:
+    English:
+      title: Vacuum
+      success_msg: "{{ \"Cleaning task succeeded at {{ now().strftime('%-H:%M') }}.\" }}"
+      error_msg: "{{ \"The robot has encountered an issue: {{ states('\" ~ error_message_sensor ~ \"') }}\" }}"
+      default_msg: "Everything is working fine."
+    German:
+      title: Staubsauger
+      success_msg: "{{ \"Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen.\" }}"
+      error_msg: "{{ \"Der Staubsauger hat ein Problem: {{ states('\" ~ error_message_sensor ~ \"') }}\" }}"
+      default_msg: Alles gut.
 
 trigger:
   - platform: state
@@ -56,7 +77,7 @@ trigger:
     to: returning
     id: cleaning_finished
     variables:
-      message: "Cleaning task succeeded at {{ now().strftime('%-H:%M') }}."
+      msg_type: success_msg
   - platform: state
     entity_id: !input vacuum
     to: error
@@ -66,9 +87,7 @@ trigger:
       seconds: 5
     id: error
     variables:
-      message: >-
-        The robot has encountered an issue:
-        {{ states( error_message ) }}
+      msg_type: error_msg
 condition:
   - condition: or
     alias: "Finished cleaning task or error message is not empty"
@@ -82,10 +101,10 @@ condition:
           state: ''
 
 variables:
-  title: Vacuum
-  message: "{{ message | default('Everything is working fine.') }}"
+  title: "{{ strings[language]['title'] }}"
+  message: "{{ strings[language][msg_type] | default(strings[language]['default_msg']) }}"
   data:
-    entity_id: "{{ rendered_map | default(none) }}"
+    entity_id: "{{ rendered_map_sensor | default(none) }}"
     priority: high
 
 action:
