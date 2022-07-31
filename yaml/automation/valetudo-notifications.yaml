@@ -55,7 +55,7 @@ blueprint:
 trigger_variables:
   rendered_map_sensor: !input rendered_map
   error_message_sensor: !input error_message
-  notify_device: !input notify_device
+  notify_devices: !input notify_device
   group_target: !input notify_group
   language: !input language
   strings:
@@ -101,6 +101,17 @@ condition:
           state: ''
 
 variables:
+  notify_targets: >-
+      {% set ns = namespace(targets=[]) %}
+      {% if notify_devices is iterable %}
+        {% for device_id in notify_devices -%}
+            {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
+        {%- endfor %}
+      {%- endif %}
+      {% if group_target is defined %}
+          {% set ns.targets = ns.targets + [ "notify." ~ group_target|slugify ] %}
+      {%- endif %}
+      {{ns.targets}}
   title: "{{ strings[language]['title'] }}"
   message: "{{ strings[language][msg_type] | default(strings[language]['default_msg']) }}"
   data:
@@ -108,18 +119,10 @@ variables:
     priority: high
 
 action:
-  - choose:
-    - conditions: "{{ not group_target }}"
+  - repeat:
+      for_each: "{{ notify_targets }}"
       sequence:
-        - domain: mobile_app
-          type: notify
-          device_id: !input notify_device
-          title: "{{ title }}"
-          message: "{{ message }}"
-          data: "{{ data }}"
-    - conditions: "{{ group_target is defined }}"
-      sequence:
-      - service: notify.{{ group_target }}
+      - service: "{{ repeat.item }}"
         data:
           title: "{{ title }}"
           message: "{{ message }}"
