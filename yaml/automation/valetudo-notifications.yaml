@@ -65,17 +65,6 @@ trigger_variables:
   notify_devices: !input notify_device
   group_target: !input notify_group
   language: !input language
-  strings:
-    English:
-      title: Vacuum
-      success_msg: "{{ \"Cleaning task succeeded at {{ now().strftime('%-H:%M') }}.\" }}"
-      error_msg: "{{ \"The robot has encountered an issue: {{ states('\" ~ error_message_sensor ~ \"') }}\" }}"
-      default_msg: "Everything is working fine."
-    German:
-      title: Staubsauger
-      success_msg: "{{ \"Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen.\" }}"
-      error_msg: "{{ \"Der Staubsauger hat ein Problem: {{ states('\" ~ error_message_sensor ~ \"') }}\" }}"
-      default_msg: Alles gut.
 
 trigger:
   - platform: state
@@ -108,6 +97,18 @@ condition:
           state: ''
 
 variables:
+  strings:
+    English:
+      title: Vacuum
+      success_msg: "Cleaning task succeeded at {{ now().strftime('%-H:%M') }}."
+      error_msg: "The robot has encountered an issue: {{ states( error_message_sensor ) }}"
+      default_msg: "Everything is working fine."
+    German:
+      title: Staubsauger
+      success_msg: "Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen."
+      error_msg: "Der Staubsauger hat ein Problem: {{ states( error_message_sensor ) }}"
+      default_msg: Alles gut.
+
   notify_targets: >-
       {% set ns = namespace(targets=[]) %}
       {% if notify_devices is iterable %}
