@@ -36,7 +36,7 @@ Triggers the auto-empty dock.
 
 ### Notifications
 
-Sends notifications to your device (or devices) when the robot completes a cleaning task or encounters an error.
+Sends notifications to your device (or devices) when the robot completes a cleaning task or encounters an error. Optionally, you can also provide your own dashboard URL for the notification.
 
 Available languages:
 *   English

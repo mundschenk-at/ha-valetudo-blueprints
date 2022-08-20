@@ -30,6 +30,13 @@ blueprint:
                 domain: sensor
                 integration: mqtt
                 multiple: false
+    dashboard_url:
+        name: Dashboard URL
+        description: The dashboard that should be opened when tapping on the notification.
+        default: '/lovelace/'
+        selector:
+          text:
+            type: url
     notify_device:
         name: Notification Device(s)
         description: The notified device(s).
@@ -117,6 +124,10 @@ variables:
   data:
     entity_id: "{{ rendered_map_sensor | default(none) }}"
     priority: high
+    # iOS URL
+    url: !input dashboard_url
+    # Android URL
+    clickAction: !input dashboard_url
 
 action:
   - repeat:
