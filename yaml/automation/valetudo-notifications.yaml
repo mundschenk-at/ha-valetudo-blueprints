@@ -116,7 +116,7 @@ variables:
             {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
         {%- endfor %}
       {%- endif %}
-      {% if group_target is defined %}
+      {% if group_target is defined and group_target is string and group_target != '' %}
           {% set ns.targets = ns.targets + [ "notify." ~ group_target|slugify ] %}
       {%- endif %}
       {{ns.targets}}
