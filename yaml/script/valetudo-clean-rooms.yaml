@@ -42,6 +42,10 @@ variables:
 sequence:
   - service: !input send_robot_command
     data:
+      mqtt_topic: OperationModeControlCapability/preset/set
+      mqtt_payload: "{{mode|default('vacuum')}}"
+  - service: !input send_robot_command
+    data:
       mqtt_topic: MapSegmentationCapability/clean/set
       mqtt_payload: >-
         {%- set ns = namespace(ids=[]) %}
@@ -61,6 +65,20 @@ fields:
     selector:
       text:
         multiline: false
+  mode:
+    name: Mode
+    description: The cleaning mode.
+    required: true
+    default: vacuum
+    selector:
+      select:
+        options:
+          - label: Vacuum
+            value: vacuum
+          - label: Mop
+            value: mop
+          - label: Vacuum & Mop
+            value: vacuum_and_mop
   iterations:
     name: Iterations
     description: The number of cleaning iterations per room.
