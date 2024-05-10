@@ -179,4 +179,5 @@ action:
           message: "{{ message }}"
           data: "{{ data }}"
 
-mode: queued
+mode: parallel
+max: 5
