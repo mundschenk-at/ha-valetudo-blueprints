@@ -126,7 +126,9 @@ variables:
       {% set ns = namespace(targets=[]) %}
       {% if notify_devices is iterable %}
         {% for device_id in notify_devices -%}
-            {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
+          {% if device_id -%}
+              {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
+          {%- endif %}
         {%- endfor %}
       {%- endif %}
       {% if group_target is defined and group_target is string and group_target != '' %}
