@@ -30,6 +30,14 @@ blueprint:
                 domain: sensor
                 integration: mqtt
                 multiple: false
+    status_flag:
+      name: Status Flag
+      description: The sensor containing the status flag of the robot.
+      selector:
+          entity:
+              domain: sensor
+              integration: mqtt
+              multiple: false
     dashboard_url:
         name: Dashboard URL
         description: The dashboard that should be opened when tapping on the notification.
@@ -62,6 +70,7 @@ blueprint:
 trigger_variables:
   rendered_map_sensor: !input rendered_map
   error_message_sensor: !input error_message
+  status_flag_sensor: !input status_flag
   notify_devices: !input notify_device
   group_target: !input notify_group
   language: !input language
@@ -71,6 +80,10 @@ trigger:
     entity_id: !input vacuum
     from: cleaning
     to: returning
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
     id: cleaning_finished
     variables:
       msg_type: success_msg
@@ -131,6 +144,30 @@ variables:
     clickAction: !input dashboard_url
 
 action:
+  - if:
+      - alias: "If cleaning is potentially finished"
+        condition: trigger
+        id: cleaning_finished
+    then:
+      - alias: "Wait for docking"
+        wait_for_trigger:
+          - platform: state
+            entity_id: !input vacuum
+            from: returning
+            to: docked
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 5
+        timeout:
+          minutes: 30
+      - if:
+        - alias: "If cleaning is resumable"
+          condition: state
+          entity_id: !input status_flag
+          state: "resumable"
+        then:
+          - stop: "No notification is necessary"
   - repeat:
       for_each: "{{ notify_targets }}"
       sequence:
