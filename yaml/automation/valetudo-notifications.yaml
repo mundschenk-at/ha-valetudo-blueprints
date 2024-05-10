@@ -30,6 +30,14 @@ blueprint:
                 domain: sensor
                 integration: mqtt
                 multiple: false
+    status_flag:
+      name: Status Flag
+      description: The sensor containing the status flag of the robot.
+      selector:
+          entity:
+              domain: sensor
+              integration: mqtt
+              multiple: false
     dashboard_url:
         name: Dashboard URL
         description: The dashboard that should be opened when tapping on the notification.
@@ -62,6 +70,7 @@ blueprint:
 trigger_variables:
   rendered_map_sensor: !input rendered_map
   error_message_sensor: !input error_message
+  status_flag_sensor: !input status_flag
   notify_devices: !input notify_device
   group_target: !input notify_group
   language: !input language
@@ -71,6 +80,10 @@ trigger:
     entity_id: !input vacuum
     from: cleaning
     to: returning
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
     id: cleaning_finished
     variables:
       msg_type: success_msg
@@ -113,7 +126,9 @@ variables:
       {% set ns = namespace(targets=[]) %}
       {% if notify_devices is iterable %}
         {% for device_id in notify_devices -%}
-            {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
+          {% if device_id -%}
+              {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
+          {%- endif %}
         {%- endfor %}
       {%- endif %}
       {% if group_target is defined and group_target is string and group_target != '' %}
@@ -131,6 +146,30 @@ variables:
     clickAction: !input dashboard_url
 
 action:
+  - if:
+      - alias: "If cleaning is potentially finished"
+        condition: trigger
+        id: cleaning_finished
+    then:
+      - alias: "Wait for docking"
+        wait_for_trigger:
+          - platform: state
+            entity_id: !input vacuum
+            from: returning
+            to: docked
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 5
+        timeout:
+          minutes: 30
+      - if:
+        - alias: "If cleaning is resumable"
+          condition: state
+          entity_id: !input status_flag
+          state: "resumable"
+        then:
+          - stop: "No notification is necessary"
   - repeat:
       for_each: "{{ notify_targets }}"
       sequence:
@@ -140,4 +179,5 @@ action:
           message: "{{ message }}"
           data: "{{ data }}"
 
-mode: queued
+mode: parallel
+max: 5
