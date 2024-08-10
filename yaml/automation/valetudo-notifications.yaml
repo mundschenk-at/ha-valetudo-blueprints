@@ -138,6 +138,10 @@ variables:
   title: "{{ strings[language]['title'] }}"
   message: "{{ strings[language][msg_type] | default(strings[language]['default_msg']) }}"
   data:
+    # Android map
+    image: >-
+      {{ iif( rendered_map_sensor, '/api/camera_proxy/'~rendered_map_sensor, none ) }}
+    # iOS map
     entity_id: "{{ rendered_map_sensor | default(none) }}"
     priority: high
     # iOS URL
