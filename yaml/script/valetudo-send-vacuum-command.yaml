@@ -26,8 +26,8 @@ sequence:
   - alias: Publish MQTT topic
     service: mqtt.publish
     data:
-      topic_template: '{{valetudo_prefix|trim}}/{{robot_prefix|trim}}/{{mqtt_topic|trim}}'
-      payload_template: '{{mqtt_payload|trim}}'
+      topic: '{{valetudo_prefix|trim}}/{{robot_prefix|trim}}/{{mqtt_topic|trim}}'
+      payload: '{{mqtt_payload|trim}}'
 fields:
   mqtt_topic:
     name: Topic
