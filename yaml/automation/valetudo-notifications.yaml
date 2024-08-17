@@ -66,6 +66,7 @@ blueprint:
           options:
             - English
             - German
+            - Francais
 
 trigger_variables:
   rendered_map_sensor: !input rendered_map
@@ -121,6 +122,11 @@ variables:
       success_msg: "Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen."
       error_msg: "Der Staubsauger hat ein Problem: {{ states( error_message_sensor ) }}"
       default_msg: Alles gut.
+    Francais:
+      title: Aspirateur
+      success_msg: "Nettoyage terminé à {{ now().strftime('%-H:%M') }}."
+      error_msg: "Le robot à rencontré une erreur: {{ states( error_message_sensor ) }}"
+      default_msg: "Tout va bien"
 
   notify_targets: >-
       {% set ns = namespace(targets=[]) %}
