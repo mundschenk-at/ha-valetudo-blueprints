@@ -94,7 +94,7 @@ trigger:
     for:
       hours: 0
       minutes: 0
-      seconds: 5
+      seconds: 10
     id: error
     variables:
       msg_type: error_msg
