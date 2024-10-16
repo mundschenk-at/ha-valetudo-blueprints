@@ -19,8 +19,11 @@ blueprint:
         description: The vacuum map rendered as a PNG image.
         selector:
             entity:
-                domain: camera
-                integration: mqtt
+                filter:
+                    - domain: camera
+                      integration: mqtt
+                    - domain: camera
+                      integration: mqtt_vacuum_camera
                 multiple: false
     error_message:
         name: Error Message
