@@ -124,6 +124,9 @@ variables:
       success_msg: "Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen."
       error_msg: "Der Staubsauger hat ein Problem: {{ states( error_message_sensor ) }}"
       default_msg: Alles gut.
+  notify_channel:
+    success_msg: "Valetudo Success"
+    erorr_msg: "Valetudo Error"
 
   notify_targets: >-
       {% set ns = namespace(targets=[]) %}
@@ -151,6 +154,7 @@ variables:
     url: !input dashboard_url
     # Android URL
     clickAction: !input dashboard_url
+    channel: "{{ notify_channel[msg_type]  | default('General') }}"
 
 action:
   - if:
