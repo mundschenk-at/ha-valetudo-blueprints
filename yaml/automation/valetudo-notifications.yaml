@@ -129,7 +129,7 @@ variables:
       success_msg: "Nettoyage terminé à {{ now().strftime('%-H:%M') }}."
       error_msg: "Le robot à rencontré une erreur: {{ states( error_message_sensor ) }}"
       default_msg: "Tout va bien"
-    Italian:
+    Italiano:
       title: Aspirapolvere
       success_msg: "La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M') }}."
       error_msg: "Il robot ha riscontrato un errore: {{ states( error_message_sensor ) }}"
