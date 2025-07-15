@@ -1,217 +1,217 @@
 blueprint:
-    name: 'Valetudo: Notifications'
-    description: Sends a notification after a successful clean-up run and on error.
-    source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/automation/valetudo-notifications.yaml
-    domain: automation
-    homeassistant:
-        min_version: 2022.6.0
-    input:
-        vacuum:
-            name: Vacuum Robot
-            description: The vacuum robot entity.
-            selector:
-                entity:
-                    domain:
-                        - vacuum
-                    integration: mqtt
-                    multiple: false
-        rendered_map:
-            name: Rendered Map
-            description: The vacuum map rendered as a PNG image.
-            selector:
-                entity:
-                    filter:
-                        - domain:
-                              - camera
-                          integration: mqtt
-                        - domain:
-                              - camera
-                          integration: mqtt_vacuum_camera
-                    multiple: false
-        error_message:
-            name: Error Message
-            description: The sensor containing the last error message.
-            selector:
-                entity:
-                    domain:
-                        - sensor
-                    integration: mqtt
-                    multiple: false
-        status_flag:
-            name: Status Flag
-            description: The sensor containing the status flag of the robot.
-            selector:
-                entity:
-                    domain:
-                        - sensor
-                    integration: mqtt
-                    multiple: false
-        dashboard_url:
-            name: Dashboard URL
-            description: The dashboard that should be opened when tapping on the notification.
-            default: /lovelace/
-            selector:
-                text:
-                    type: url
-                    multiple: false
-                    multiline: false
-        notify_device:
-            name: Notification Device(s)
-            description: The notified device(s).
-            default: false
-            selector:
-                device:
-                    integration: mobile_app
-                    multiple: true
-        notify_group:
-            name: Notification Group
-            description: The name of the notification group to call. ('notify' for all devices)
-            default: ''
-        language:
-            name: Language
-            description: The language used for the notifications.
-            default: English
-            selector:
-                select:
-                    options:
-                        - English
-                        - French
-                        - German
-                        - Italian
-                    multiple: false
-                    sort: false
-                    custom_value: false
+  name: 'Valetudo: Notifications'
+  description: Sends a notification after a successful clean-up run and on error.
+  source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/automation/valetudo-notifications.yaml
+  domain: automation
+  homeassistant:
+    min_version: 2022.6.0
+  input:
+    vacuum:
+      name: Vacuum Robot
+      description: The vacuum robot entity.
+      selector:
+        entity:
+          domain:
+            - vacuum
+          integration: mqtt
+          multiple: false
+    rendered_map:
+      name: Rendered Map
+      description: The vacuum map rendered as a PNG image.
+      selector:
+        entity:
+          filter:
+            - domain:
+                - camera
+              integration: mqtt
+            - domain:
+                - camera
+              integration: mqtt_vacuum_camera
+          multiple: false
+    error_message:
+      name: Error Message
+      description: The sensor containing the last error message.
+      selector:
+        entity:
+          domain:
+            - sensor
+          integration: mqtt
+          multiple: false
+    status_flag:
+      name: Status Flag
+      description: The sensor containing the status flag of the robot.
+      selector:
+        entity:
+          domain:
+            - sensor
+          integration: mqtt
+          multiple: false
+    dashboard_url:
+      name: Dashboard URL
+      description: The dashboard that should be opened when tapping on the notification.
+      default: /lovelace/
+      selector:
+        text:
+          type: url
+          multiple: false
+          multiline: false
+    notify_device:
+      name: Notification Device(s)
+      description: The notified device(s).
+      default: false
+      selector:
+        device:
+          integration: mobile_app
+          multiple: true
+    notify_group:
+      name: Notification Group
+      description: The name of the notification group to call. ('notify' for all devices)
+      default: ''
+    language:
+      name: Language
+      description: The language used for the notifications.
+      default: English
+      selector:
+        select:
+          options:
+            - English
+            - French
+            - German
+            - Italian
+          multiple: false
+          sort: false
+          custom_value: false
 trigger_variables:
-    rendered_map_sensor: !input rendered_map
-    error_message_sensor: !input error_message
-    status_flag_sensor: !input status_flag
-    notify_devices: !input notify_device
-    group_target: !input notify_group
-    language: !input language
+  rendered_map_sensor: !input rendered_map
+  error_message_sensor: !input error_message
+  status_flag_sensor: !input status_flag
+  notify_devices: !input notify_device
+  group_target: !input notify_group
+  language: !input language
 trigger:
-    - platform: state
-      entity_id: !input vacuum
-      from: cleaning
-      to: returning
-      for:
-          hours: 0
-          minutes: 0
-          seconds: 5
-      id: cleaning_finished
-      variables:
-          msg_type: success_msg
-    - platform: state
-      entity_id: !input vacuum
-      to: error
-      for:
-          hours: 0
-          minutes: 0
-          seconds: 5
-      id: error
-      variables:
-          msg_type: error_msg
+  - platform: state
+    entity_id: !input vacuum
+    from: cleaning
+    to: returning
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: cleaning_finished
+    variables:
+      msg_type: success_msg
+  - platform: state
+    entity_id: !input vacuum
+    to: error
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: error
+    variables:
+      msg_type: error_msg
 condition:
-    - condition: or
-      alias: Finished cleaning task or error message is not empty
-      conditions:
-          - condition: trigger
-            id: cleaning_finished
-          - condition: not
-            conditions:
-                - condition: state
-                  entity_id: !input error_message
-                  state: ''
+  - condition: or
+    alias: Finished cleaning task or error message is not empty
+    conditions:
+      - condition: trigger
+        id: cleaning_finished
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: !input error_message
+            state: ''
 variables:
-    vacuum_id: !input vacuum
-    vacuum_name: '{{ device_attr(vacuum_id, "name_by_user") or device_attr(vacuum_id, "name") }}'
-    strings:
-        English:
-            title: 'Vacuum {{vacuum_name}}'
-            success_msg: Cleaning task succeeded at {{ now().strftime('%-H:%M') }}.
-            error_msg:
-                'The robot has encountered an issue: {{ states( error_message_sensor
-                ) }}'
-            default_msg: Everything is working fine.
-        German:
-            title: 'Staubsauger {{vacuum_name}}'
-            success_msg:
-                Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich
-                abgeschlossen.
-            error_msg:
-                'Der Staubsauger hat ein Problem: {{ states( error_message_sensor
-                ) }}'
-            default_msg: Alles gut.
-        French:
-            title: 'Aspirateur {{vacuum_name}}'
-            success_msg: Nettoyage terminé à {{ now().strftime('%-H:%M') }}.
-            error_msg:
-                'Le robot à rencontré une erreur: {{ states( error_message_sensor
-                ) }}'
-            default_msg: Tout va bien
-        Italian:
-            title: 'Aspirapolvere {{vacuum_name}}'
-            success_msg:
-                La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M')
-                }}.
-            error_msg:
-                'Il robot ha riscontrato un errore: {{ states( error_message_sensor
-                ) }}'
-            default_msg: Tutto funziona regolarmente.
-    notify_channel:
-        success_msg: Valetudo Success
-        erorr_msg: Valetudo Error
-    notify_targets:
-        "{% set ns = namespace(targets=[]) %} {% if notify_devices is iterable
-        %}\n  {% for device_id in notify_devices -%}\n    {% if device_id -%}\n        {%
-        set ns.targets = ns.targets + [ \"notify.mobile_app_\" ~ device_attr( device_id,
-        'name' )|slugify ] %}\n    {%- endif %}\n  {%- endfor %}\n{%- endif %} {% if group_target
-        is defined and group_target is string and group_target != '' %}\n    {% set ns.targets
-        = ns.targets + [ \"notify.\" ~ group_target|slugify ] %}\n{%- endif %} {{ns.targets}}"
-    title: "{{ strings[language]['title'] }}"
-    message:
-        "{{ strings[language][msg_type] | default(strings[language]['default_msg'])
-        }}"
-    data:
-        image:
-            "{{ iif( rendered_map_sensor, '/api/camera_proxy/'~rendered_map_sensor,
-            none ) }}"
-        entity_id: '{{ rendered_map_sensor | default(none) }}'
-        priority: high
-        url: !input dashboard_url
-        clickAction: !input dashboard_url
-        channel: "{{ notify_channel[msg_type]  | default('General') }}"
+  vacuum_id: !input vacuum
+  vacuum_name: '{{ device_attr(vacuum_id, "name_by_user") or device_attr(vacuum_id, "name") }}'
+  strings:
+    English:
+      title: 'Vacuum {{vacuum_name}}'
+      success_msg: Cleaning task succeeded at {{ now().strftime('%-H:%M') }}.
+      error_msg:
+        'The robot has encountered an issue: {{ states( error_message_sensor
+        ) }}'
+      default_msg: Everything is working fine.
+    German:
+      title: 'Staubsauger {{vacuum_name}}'
+      success_msg:
+        Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich
+        abgeschlossen.
+      error_msg:
+        'Der Staubsauger hat ein Problem: {{ states( error_message_sensor
+        ) }}'
+      default_msg: Alles gut.
+    French:
+      title: 'Aspirateur {{vacuum_name}}'
+      success_msg: Nettoyage terminé à {{ now().strftime('%-H:%M') }}.
+      error_msg:
+        'Le robot à rencontré une erreur: {{ states( error_message_sensor
+        ) }}'
+      default_msg: Tout va bien
+    Italian:
+      title: 'Aspirapolvere {{vacuum_name}}'
+      success_msg:
+        La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M')
+        }}.
+      error_msg:
+        'Il robot ha riscontrato un errore: {{ states( error_message_sensor
+        ) }}'
+      default_msg: Tutto funziona regolarmente.
+  notify_channel:
+    success_msg: Valetudo Success
+    erorr_msg: Valetudo Error
+  notify_targets:
+    "{% set ns = namespace(targets=[]) %} {% if notify_devices is iterable
+    %}\n  {% for device_id in notify_devices -%}\n    {% if device_id -%}\n        {%
+    set ns.targets = ns.targets + [ \"notify.mobile_app_\" ~ device_attr( device_id,
+    'name' )|slugify ] %}\n    {%- endif %}\n  {%- endfor %}\n{%- endif %} {% if group_target
+    is defined and group_target is string and group_target != '' %}\n    {% set ns.targets
+    = ns.targets + [ \"notify.\" ~ group_target|slugify ] %}\n{%- endif %} {{ns.targets}}"
+  title: "{{ strings[language]['title'] }}"
+  message:
+    "{{ strings[language][msg_type] | default(strings[language]['default_msg'])
+    }}"
+  data:
+    image:
+      "{{ iif( rendered_map_sensor, '/api/camera_proxy/'~rendered_map_sensor,
+      none ) }}"
+    entity_id: '{{ rendered_map_sensor | default(none) }}'
+    priority: high
+    url: !input dashboard_url
+    clickAction: !input dashboard_url
+    channel: "{{ notify_channel[msg_type]  | default('General') }}"
 action:
-    - if:
-          - alias: If cleaning is potentially finished
-            condition: trigger
-            id: cleaning_finished
-      then:
-          - alias: Wait for docking
-            wait_for_trigger:
-                - platform: state
-                  entity_id: '{{ vacuum_id }}'
-                  from: returning
-                  to: docked
-                  for:
-                      hours: 0
-                      minutes: 0
-                      seconds: 5
-            timeout:
-                minutes: 30
-          - if:
-                - alias: If cleaning is resumable
-                  condition: state
-                  entity_id: !input status_flag
-                  state: resumable
-            then:
-                - stop: No notification is necessary
-    - repeat:
-          for_each: '{{ notify_targets }}'
-          sequence:
-              - service: '{{ repeat.item }}'
-                data:
-                    title: '{{ title }}'
-                    message: '{{ message }}'
-                    data: '{{ data }}'
+  - if:
+      - alias: If cleaning is potentially finished
+        condition: trigger
+        id: cleaning_finished
+    then:
+      - alias: Wait for docking
+        wait_for_trigger:
+          - platform: state
+            entity_id: '{{ vacuum_id }}'
+            from: returning
+            to: docked
+            for:
+              hours: 0
+              minutes: 0
+              seconds: 5
+        timeout:
+          minutes: 30
+      - if:
+          - alias: If cleaning is resumable
+            condition: state
+            entity_id: !input status_flag
+            state: resumable
+        then:
+          - stop: No notification is necessary
+  - repeat:
+      for_each: '{{ notify_targets }}'
+      sequence:
+        - service: '{{ repeat.item }}'
+          data:
+            title: '{{ title }}'
+            message: '{{ message }}'
+            data: '{{ data }}'
 mode: parallel
 max: 5
