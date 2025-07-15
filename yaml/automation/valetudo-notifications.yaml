@@ -189,7 +189,7 @@ action:
       - alias: Wait for docking
         wait_for_trigger:
           - platform: state
-            entity_id: '{{ vacuum_id }}'
+            entity_id: !input vacuum
             from: returning
             to: docked
             for:
