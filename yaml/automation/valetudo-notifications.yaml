@@ -1,10 +1,10 @@
 blueprint:
-  name: 'Valetudo: Notifications'
+  name: "Valetudo: Notifications"
   description: Sends a notification after a successful clean-up run and on error.
   source_url: https://github.com/mundschenk-at/ha-valetudo-blueprints/blob/main/yaml/automation/valetudo-notifications.yaml
   domain: automation
   homeassistant:
-    min_version: 2022.6.0
+    min_version: 2024.6.0
   input:
     vacuum:
       name: Vacuum Robot
@@ -12,7 +12,7 @@ blueprint:
       selector:
         entity:
           domain:
-          - vacuum
+            - vacuum
           integration: mqtt
           multiple: false
     rendered_map:
@@ -21,12 +21,12 @@ blueprint:
       selector:
         entity:
           filter:
-          - domain:
-            - camera
-            integration: mqtt
-          - domain:
-            - camera
-            integration: mqtt_vacuum_camera
+            - domain:
+                - camera
+              integration: mqtt
+            - domain:
+                - camera
+              integration: mqtt_vacuum_camera
           multiple: false
     error_message:
       name: Error Message
@@ -34,7 +34,7 @@ blueprint:
       selector:
         entity:
           domain:
-          - sensor
+            - sensor
           integration: mqtt
           multiple: false
     status_flag:
@@ -43,7 +43,7 @@ blueprint:
       selector:
         entity:
           domain:
-          - sensor
+            - sensor
           integration: mqtt
           multiple: false
     dashboard_url:
@@ -66,7 +66,7 @@ blueprint:
     notify_group:
       name: Notification Group
       description: The name of the notification group to call. ('notify' for all devices)
-      default: ''
+      default: ""
     language:
       name: Language
       description: The language used for the notifications.
@@ -74,13 +74,103 @@ blueprint:
       selector:
         select:
           options:
-          - English
-          - French
-          - German
-          - Italian
+            - English
+            - French
+            - German
+            - Italian
           multiple: false
           sort: false
           custom_value: false
+    main_brush:
+      icon: mdi:broom
+      name: |
+        # Main brush
+      input:
+        main_brush_sensor:
+          name: Main brush sensor
+          selector:
+            entity:
+              domain: sensor
+          default: null
+
+        main_brush_reset_button:
+          name: Main brush reset button
+          selector:
+            entity:
+              domain: button
+          default: null
+    right_brush:
+      icon: mdi:broom
+      name: |
+        # Right brush
+      input:
+        right_brush_sensor:
+          name: Right brush sensor
+          selector:
+            entity:
+              domain: sensor
+          default: null
+
+        right_brush_reset_button:
+          name: Right brush reset button
+          selector:
+            entity:
+              domain: button
+          default: null
+    main_filter:
+      icon: mdi:broom
+      name: |
+        # Main filter
+      input:
+        main_filter_sensor:
+          name: Main filter sensor
+          selector:
+            entity:
+              domain: sensor
+          default: null
+
+        main_filter_reset_button:
+          name: Main filter reset button
+          selector:
+            entity:
+              domain: button
+          default: null
+    sensor_cleaning:
+      icon: mdi:broom
+      name: |
+        # Sensor cleaning
+      input:
+        sensor_cleaning_sensor:
+          name: Sensor cleaning sensor
+          selector:
+            entity:
+              domain: sensor
+          default: null
+
+        sensor_cleaning_reset_button:
+          name: Sensor cleaning reset button
+          selector:
+            entity:
+              domain: button
+          default: null
+    dock_bin:
+      icon: mdi:broom
+      name: |
+        # Dock bin
+      input:
+        dock_bin_sensor:
+          name: Dock bin sensor
+          selector:
+            entity:
+              domain: sensor
+          default: null
+
+        dock_bin_reset_button:
+          name: Dock bin reset button
+          selector:
+            entity:
+              domain: button
+          default: null
 trigger_variables:
   rendered_map_sensor: !input rendered_map
   error_message_sensor: !input error_message
@@ -88,121 +178,272 @@ trigger_variables:
   notify_devices: !input notify_device
   group_target: !input notify_group
   language: !input language
+  main_brush_sensor: !input main_brush_sensor
+  right_brush_sensor: !input right_brush_sensor
+  main_filter_sensor: !input main_filter_sensor
+  sensor_cleaning_sensor: !input sensor_cleaning_sensor
+  dock_bin_sensor: !input dock_bin_sensor
 trigger:
-- platform: state
-  entity_id: !input vacuum
-  from: cleaning
-  to: returning
-  for:
-    hours: 0
-    minutes: 0
-    seconds: 5
-  id: cleaning_finished
-  variables:
-    msg_type: success_msg
-- platform: state
-  entity_id: !input vacuum
-  to: error
-  for:
-    hours: 0
-    minutes: 0
-    seconds: 5
-  id: error
-  variables:
-    msg_type: error_msg
+  - trigger: state
+    entity_id: !input vacuum
+    from: cleaning
+    to: returning
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: CLEANING_FINISHED
+    variables:
+      msg_type: success_msg
+      show_map: true
+  - trigger: state
+    entity_id: !input vacuum
+    to: error
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 5
+    id: ERROR
+    variables:
+      msg_type: error_msg
+      show_map: true
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: "bp_valetudo_action_main_brush"
+    trigger: event
+    id: NOTIFICATION_ACTION_MAIN_BRUSH
+    variables:
+      button: !input main_brush_reset_button
+  - trigger: template
+    value_template: "{{ states(main_brush_sensor) | float(1) == 0 }}"
+    id: MAIN_BRUSH_LOW
+    variables:
+      msg_type: main_brush
+      notification_action: "bp_valetudo_action_main_brush"
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: "bp_valetudo_action_right_brush"
+    trigger: event
+    id: NOTIFICATION_ACTION_RIGHT_BRUSH
+    variables:
+      button: !input right_brush_reset_button
+  - trigger: template
+    value_template: "{{ states(right_brush_sensor) | float(1) == 0 }}"
+    id: RIGHT_BRUSH_LOW
+    variables:
+      msg_type: right_brush
+      notification_action: "bp_valetudo_action_right_brush"
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: "bp_valetudo_action_main_filter"
+    trigger: event
+    id: NOTIFICATION_ACTION_MAIN_FILTER
+    variables:
+      button: !input main_filter_reset_button
+  - trigger: template
+    value_template: "{{ states(main_filter_sensor) | float(1) == 0 }}"
+    id: MAIN_FILTER_LOW
+    variables:
+      msg_type: main_filter
+      notification_action: "bp_valetudo_action_main_filter"
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: "bp_valetudo_action_sensor_cleaning"
+    trigger: event
+    id: NOTIFICATION_ACTION_SENSOR_CLEANING
+    variables:
+      button: !input sensor_cleaning_reset_button
+  - trigger: template
+    value_template: "{{ states(sensor_cleaning_sensor) | float(1) == 0 }}"
+    id: SENSOR_CLEANING_LOW
+    variables:
+      msg_type: sensor_cleaning
+      notification_action: "bp_valetudo_action_sensor_cleaning"
+  - event_type: mobile_app_notification_action
+    event_data:
+      action: "bp_valetudo_action_dock_bin"
+    trigger: event
+    id: NOTIFICATION_ACTION_DOCK_BIN
+    variables:
+      button: !input dock_bin_reset_button
+  - trigger: template
+    value_template: "{{ states(dock_bin_sensor) | float(1) == 0 }}"
+    id: DOCK_BIN_LOW
+    variables:
+      msg_type: dock_bin
+      notification_action: "bp_valetudo_action_dock_bin"
+
 condition:
-- condition: or
-  alias: Finished cleaning task or error message is not empty
-  conditions:
-  - condition: trigger
-    id: cleaning_finished
-  - condition: not
+  - condition: or
+    alias: "Pass if not an error, or if an error message exists"
     conditions:
-    - condition: state
-      entity_id: !input error_message
-      state: ''
+      # Condition 1: Passes if the trigger ID is NOT 'ERROR'.
+      # This covers all your other triggers (CLEANING_FINISHED, MAIN_BRUSH_LOW, etc.)
+      - condition: not
+        conditions:
+          - condition: trigger
+            id: ERROR
+
+      # Condition 2: Passes if the 'error_message' input is not empty.
+      - condition: not
+        conditions:
+          - condition: state
+            entity_id: !input error_message
+            state: ""
 variables:
   vacuum_id: !input vacuum
   vacuum_name: '{{ device_attr(vacuum_id, "name_by_user") or device_attr(vacuum_id, "name") }}'
   strings:
     English:
-      title: 'Vacuum {{vacuum_name}}'
+      title: "Vacuum {{vacuum_name}}"
       success_msg: Cleaning task succeeded at {{ now().strftime('%-H:%M') }}.
-      error_msg: 'The robot has encountered an issue: {{ states( error_message_sensor
-        ) }}'
+      error_msg:
+        "The robot has encountered an issue: {{ states( error_message_sensor
+        ) }}"
       default_msg: Everything is working fine.
+      main_brush: The main brush needs to be replaced
+      right_brush: The side brush needs to be replaced
+      main_filter: The filter needs to be replaced
+      sensor_cleaning: The sensors need to be cleaned
+      dock_bin: The dustbin needs to be emptied
+      done: done
     German:
-      title: 'Staubsauger {{vacuum_name}}'
-      success_msg: Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich
+      title: "Staubsauger {{vacuum_name}}"
+      success_msg:
+        Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich
         abgeschlossen.
-      error_msg: 'Der Staubsauger hat ein Problem: {{ states( error_message_sensor
-        ) }}'
+      error_msg:
+        "Der Staubsauger hat ein Problem: {{ states( error_message_sensor
+        ) }}"
       default_msg: Alles gut.
+      main_brush: Die Hauptbürste muss ausgetauscht werden
+      right_brush: Die Seitenbürste muss ausgetauscht werden
+      main_filter: Der Filter muss ausgetauscht werden
+      sensor_cleaning: Die Sensoren müssen gereinigt werden
+      dock_bin: Der Staubbehälter muss geleert werden
+      done: Erledigt
     French:
-      title: 'Aspirateur {{vacuum_name}}'
+      title: "Aspirateur {{vacuum_name}}"
       success_msg: Nettoyage terminé à {{ now().strftime('%-H:%M') }}.
-      error_msg: 'Le robot à rencontré une erreur: {{ states( error_message_sensor
-        ) }}'
+      error_msg:
+        "Le robot à rencontré une erreur: {{ states( error_message_sensor
+        ) }}"
       default_msg: Tout va bien
+      main_brush: Il faut remplacer la brosse principale
+      right_brush: Il faut remplacer la brosse secondaire
+      main_filter: Il faut remplacer le filtre
+      sensor_cleaning: Il faut nettoyer les capteurs
+      dock_bin: Il faut vider la station de vidange
+      done: Fait
     Italian:
-      title: 'Aspirapolvere {{vacuum_name}}'
-      success_msg: La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M')
+      title: "Aspirapolvere {{vacuum_name}}"
+      success_msg:
+        La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M')
         }}.
-      error_msg: 'Il robot ha riscontrato un errore: {{ states( error_message_sensor
-        ) }}'
+      error_msg:
+        "Il robot ha riscontrato un errore: {{ states( error_message_sensor
+        ) }}"
       default_msg: Tutto funziona regolarmente.
+      main_brush: È necessario sostituire la spazzola principale
+      right_brush: È necessario sostituire la spazzola laterale
+      main_filter: È necessario sostituire il filtro
+      sensor_cleaning: È necessario pulire i sensori
+      dock_bin: È necessario svuotare il contenitore della polvere
+      done: Fatto
   notify_channel:
     success_msg: Valetudo Success
     erorr_msg: Valetudo Error
-  notify_targets: "{% set ns = namespace(targets=[]) %} {% if notify_devices is iterable
+  notify_targets:
+    "{% set ns = namespace(targets=[]) %} {% if notify_devices is iterable
     %}\n  {% for device_id in notify_devices -%}\n    {% if device_id -%}\n        {%
     set ns.targets = ns.targets + [ \"notify.mobile_app_\" ~ device_attr( device_id,
     'name' )|slugify ] %}\n    {%- endif %}\n  {%- endfor %}\n{%- endif %} {% if group_target
     is defined and group_target is string and group_target != '' %}\n    {% set ns.targets
     = ns.targets + [ \"notify.\" ~ group_target|slugify ] %}\n{%- endif %} {{ns.targets}}"
-  title: '{{ strings[language][''title''] }}'
-  message: '{{ strings[language][msg_type] | default(strings[language][''default_msg''])
-    }}'
+  title: "{{ strings[language]['title'] }}"
+  message:
+    "{{ strings[language][msg_type] | default(strings[language]['default_msg'])
+    }}"
   data:
-    image: '{{ iif( rendered_map_sensor, ''/api/camera_proxy/''~rendered_map_sensor,
-      none ) }}'
-    entity_id: '{{ rendered_map_sensor | default(none) }}'
+    image:
+      "{{ iif( rendered_map_sensor, '/api/camera_proxy/'~rendered_map_sensor,
+      none ) }}"
+    entity_id: "{{ rendered_map_sensor | default(none) }}"
     priority: high
     url: !input dashboard_url
     clickAction: !input dashboard_url
-    channel: '{{ notify_channel[msg_type]  | default(''General'') }}'
+    channel: "{{ notify_channel[msg_type]  | default('General') }}"
 action:
-- if:
-  - alias: If cleaning is potentially finished
-    condition: trigger
-    id: cleaning_finished
-  then:
-  - alias: Wait for docking
-    wait_for_trigger:
-    - platform: state
-      entity_id: '{{ vacuum_id }}'
-      from: returning
-      to: docked
-      for:
-        hours: 0
-        minutes: 0
-        seconds: 5
-    timeout:
-      minutes: 30
-  - if:
-    - alias: If cleaning is resumable
-      condition: state
-      entity_id: !input status_flag
-      state: resumable
-    then:
-    - stop: No notification is necessary
-- repeat:
-    for_each: '{{ notify_targets }}'
-    sequence:
-    - service: '{{ repeat.item }}'
-      data:
-        title: '{{ title }}'
-        message: '{{ message }}'
-        data: '{{ data }}'
+  - choose:
+      - conditions:
+          - condition: trigger
+            id:
+              - CLEANING_FINISHED
+              - ERROR
+        sequence:
+          - if:
+              - alias: If cleaning is potentially finished
+                condition: trigger
+                id: CLEANING_FINISHED
+            then:
+              - alias: Wait for docking
+                wait_for_trigger:
+                  - platform: state
+                    entity_id: !input vacuum
+                    from: returning
+                    to: docked
+                    for:
+                      hours: 0
+                      minutes: 0
+                      seconds: 5
+                timeout:
+                  minutes: 30
+              - if:
+                  - alias: If cleaning is resumable
+                    condition: state
+                    entity_id: !input status_flag
+                    state: resumable
+                then:
+                  - stop: No notification is necessary
+          - repeat:
+              for_each: "{{ notify_targets }}"
+              sequence:
+                - action: "{{ repeat.item }}"
+                  data:
+                    title: "{{ title }}"
+                    message: "{{ message }}"
+                    data: "{{ data }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ button is defined }}"
+        sequence:
+          action: button.press
+          data: {}
+          target:
+            entity_id: "{{ button }}"
+    default:
+      - repeat:
+          for_each: "{{ notify_targets }}"
+          sequence:
+            - action: "{{ repeat.item }}"
+              data:
+                title: "{{ title }}"
+                message: "{{ message }}"
+                data:
+                  priority: "{{ data['priority'] }}"
+                  channel: "{{ data['channel'] }}"
+                  actions: >
+                    {% if notification_action is defined and notification_action %}
+                      [
+                        {
+                          "action": '{{ notification_action }}',
+                          "title": '{{ strings[language]["done"] }}'
+                        }
+                      ]
+                    {% else %}
+                      {{ none }}
+                    {% endif %}
+
 mode: parallel
 max: 5
