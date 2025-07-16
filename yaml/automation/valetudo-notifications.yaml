@@ -11,8 +11,7 @@ blueprint:
       description: The vacuum robot entity.
       selector:
         entity:
-          domain:
-            - vacuum
+          domain: vacuum
           integration: mqtt
           multiple: false
     rendered_map:
@@ -21,11 +20,9 @@ blueprint:
       selector:
         entity:
           filter:
-            - domain:
-                - camera
+            - domain: camera
               integration: mqtt
-            - domain:
-                - camera
+            - domain: camera
               integration: mqtt_vacuum_camera
           multiple: false
     error_message:
@@ -33,8 +30,7 @@ blueprint:
       description: The sensor containing the last error message.
       selector:
         entity:
-          domain:
-            - sensor
+          domain: sensor
           integration: mqtt
           multiple: false
     status_flag:
@@ -42,19 +38,16 @@ blueprint:
       description: The sensor containing the status flag of the robot.
       selector:
         entity:
-          domain:
-            - sensor
+          domain: sensor
           integration: mqtt
           multiple: false
     dashboard_url:
       name: Dashboard URL
       description: The dashboard that should be opened when tapping on the notification.
-      default: /lovelace/
+      default: "/lovelace/"
       selector:
         text:
           type: url
-          multiple: false
-          multiline: false
     notify_device:
       name: Notification Device(s)
       description: The notified device(s).
@@ -294,7 +287,7 @@ variables:
   strings:
     English:
       title: "Vacuum {{vacuum_name}}"
-      success_msg: Cleaning task succeeded at {{ now().strftime("%-H:%M") }}.
+      success_msg: "Cleaning task succeeded at {{ now().strftime('%-H:%M') }}."
       error_msg: "The robot has encountered an issue: {{ states( error_message_sensor ) }}"
       default_msg: Everything is working fine.
       main_brush: The main brush needs to be replaced
@@ -305,9 +298,7 @@ variables:
       done: done
     German:
       title: "Staubsauger {{vacuum_name}}"
-      success_msg:
-        Die Reinigung wurde um {{ now().strftime("%-H:%M") }} Uhr erfolgreich
-        abgeschlossen.
+      success_msg: "Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen."
       error_msg: "Der Staubsauger hat ein Problem: {{ states( error_message_sensor ) }}"
       default_msg: Alles gut.
       main_brush: Die Hauptbürste muss ausgetauscht werden
@@ -318,7 +309,7 @@ variables:
       done: Erledigt
     French:
       title: "Aspirateur {{vacuum_name}}"
-      success_msg: Nettoyage terminé à {{ now().strftime("%-H:%M") }}.
+      success_msg: "Nettoyage terminé à {{ now().strftime('%-H:%M') }}."
       error_msg: "Le robot à rencontré une erreur: {{ states( error_message_sensor ) }}"
       default_msg: Tout va bien
       main_brush: Il faut remplacer la brosse principale
@@ -329,7 +320,7 @@ variables:
       done: Fait
     Italian:
       title: "Aspirapolvere {{vacuum_name}}"
-      success_msg: La pulizia è stata completata con successo alle {{ now().strftime("%-H:%M") }}.
+      success_msg: "La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M') }}."
       error_msg: "Il robot ha riscontrato un errore: {{ states( error_message_sensor ) }}"
       default_msg: Tutto funziona regolarmente.
       main_brush: È necessario sostituire la spazzola principale
@@ -339,8 +330,8 @@ variables:
       dock_bin: È necessario svuotare il contenitore della polvere
       done: Fatto
   notify_channel:
-    success_msg: Valetudo Success
-    erorr_msg: Valetudo Error
+    success_msg: "Valetudo Success"
+    error_msg: "Valetudo Error"
   notify_targets: |
     {% set ns = namespace(targets=[]) %}
     {% if notify_devices is iterable %}
@@ -412,10 +403,10 @@ action:
         timeout:
           minutes: 30
       - if:
-          - alias: If cleaning is resumable
+          - alias: "If cleaning is resumable"
             condition: state
             entity_id: !input status_flag
-            state: resumable
+            state: "resumable"
         then:
           - stop: No notification is necessary
 
