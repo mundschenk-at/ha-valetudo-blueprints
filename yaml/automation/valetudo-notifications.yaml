@@ -140,7 +140,7 @@ variables:
       default_msg: "Tutto funziona regolarmente."
   notify_channel:
     success_msg: "Valetudo Success"
-    erorr_msg: "Valetudo Error"
+    error_msg: "Valetudo Error"
 
   notify_targets: >-
     {% set ns = namespace(targets=[]) %}
