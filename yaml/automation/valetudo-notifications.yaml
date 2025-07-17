@@ -58,7 +58,7 @@ blueprint:
           multiple: true
     notify_group:
       name: Notification Group
-      description: The name of the notification group to call. ('notify' for all devices)
+      description: "The name of the notification group to call. ('notify' for all devices)"
       default: ""
     language:
       name: Language
@@ -71,9 +71,6 @@ blueprint:
             - French
             - German
             - Italian
-          multiple: false
-          sort: false
-          custom_value: false
     main_brush:
       icon: mdi:broom
       name: |
@@ -280,72 +277,72 @@ condition:
           - condition: state
             entity_id: !input error_message
             state: ""
+
 variables:
   vacuum_id: !input vacuum
-  vacuum_name: |
-    {{ device_attr(vacuum_id, "name_by_user") or device_attr(vacuum_id, "name") }}
+  vacuum_name: '{{ device_attr(vacuum_id, "name_by_user") or device_attr(vacuum_id, "name") }}'
   strings:
     English:
       title: "Vacuum {{vacuum_name}}"
       success_msg: "Cleaning task succeeded at {{ now().strftime('%-H:%M') }}."
       error_msg: "The robot has encountered an issue: {{ states( error_message_sensor ) }}"
-      default_msg: Everything is working fine.
-      main_brush: The main brush needs to be replaced
-      right_brush: The side brush needs to be replaced
-      main_filter: The filter needs to be replaced
-      sensor_cleaning: The sensors need to be cleaned
-      dock_bin: The dustbin needs to be emptied
-      done: done
+      default_msg: "Everything is working fine."
+      main_brush: "The main brush needs to be replaced"
+      right_brush: "The side brush needs to be replaced"
+      main_filter: "The filter needs to be replaced"
+      sensor_cleaning: "The sensors need to be cleaned"
+      dock_bin: "The dustbin needs to be emptied"
+      done: "done"
     German:
       title: "Staubsauger {{vacuum_name}}"
       success_msg: "Die Reinigung wurde um {{ now().strftime('%-H:%M') }} Uhr erfolgreich abgeschlossen."
       error_msg: "Der Staubsauger hat ein Problem: {{ states( error_message_sensor ) }}"
-      default_msg: Alles gut.
-      main_brush: Die Hauptbürste muss ausgetauscht werden
-      right_brush: Die Seitenbürste muss ausgetauscht werden
-      main_filter: Der Filter muss ausgetauscht werden
-      sensor_cleaning: Die Sensoren müssen gereinigt werden
-      dock_bin: Der Staubbehälter muss geleert werden
-      done: Erledigt
+      default_msg: "Alles gut."
+      main_brush: "Die Hauptbürste muss ausgetauscht werden"
+      right_brush: "Die Seitenbürste muss ausgetauscht werden"
+      main_filter: "Der Filter muss ausgetauscht werden"
+      sensor_cleaning: "Die Sensoren müssen gereinigt werden"
+      dock_bin: "Der Staubbehälter muss geleert werden"
+      done: "Erledigt"
     French:
       title: "Aspirateur {{vacuum_name}}"
       success_msg: "Nettoyage terminé à {{ now().strftime('%-H:%M') }}."
       error_msg: "Le robot à rencontré une erreur: {{ states( error_message_sensor ) }}"
-      default_msg: Tout va bien
-      main_brush: Il faut remplacer la brosse principale
-      right_brush: Il faut remplacer la brosse secondaire
-      main_filter: Il faut remplacer le filtre
-      sensor_cleaning: Il faut nettoyer les capteurs
-      dock_bin: Il faut vider la station de vidange
-      done: Fait
+      default_msg: "Tout va bien"
+      main_brush: "Il faut remplacer la brosse principale"
+      right_brush: "Il faut remplacer la brosse secondaire"
+      main_filter: "Il faut remplacer le filtre"
+      sensor_cleaning: "Il faut nettoyer les capteurs"
+      dock_bin: "Il faut vider la station de vidange"
+      done: "Fait"
     Italian:
       title: "Aspirapolvere {{vacuum_name}}"
       success_msg: "La pulizia è stata completata con successo alle {{ now().strftime('%-H:%M') }}."
       error_msg: "Il robot ha riscontrato un errore: {{ states( error_message_sensor ) }}"
       default_msg: Tutto funziona regolarmente.
-      main_brush: È necessario sostituire la spazzola principale
-      right_brush: È necessario sostituire la spazzola laterale
-      main_filter: È necessario sostituire il filtro
-      sensor_cleaning: È necessario pulire i sensori
-      dock_bin: È necessario svuotare il contenitore della polvere
-      done: Fatto
+      main_brush: "È necessario sostituire la spazzola principale"
+      right_brush: "È necessario sostituire la spazzola laterale"
+      main_filter: "È necessario sostituire il filtro"
+      sensor_cleaning: "È necessario pulire i sensori"
+      dock_bin: "È necessario svuotare il contenitore della polvere"
+      done: "Fatto"
   notify_channel:
     success_msg: "Valetudo Success"
     error_msg: "Valetudo Error"
-  notify_targets: |
+  notify_targets: >-
     {% set ns = namespace(targets=[]) %}
     {% if notify_devices is iterable %}
       {% for device_id in notify_devices -%}
-          {% if device_id -%}
-              {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, "name" )|slugify ] %}
+        {% if device_id -%}
+            {% set ns.targets = ns.targets + [ "notify.mobile_app_" ~ device_attr( device_id, 'name' )|slugify ] %}
         {%- endif %}
       {%- endfor %}
-    {%- endif %} 
-    {% if group_target is defined and group_target is string and group_target != "" %}
+    {%- endif %}
+    {% if group_target is defined and group_target is string and group_target != '' %}
         {% set ns.targets = ns.targets + [ "notify." ~ group_target|slugify ] %}
-    {%- endif %}{{ns.targets}}
-  title: |
-    {{ strings[language]["title"] }}
+    {%- endif %}
+    {{ns.targets}}
+  title: "{{ strings[language]['title'] }}"
   dashboard_url: !input dashboard_url
   message: |
     {{ strings[language][msg_type] | default(strings[language]["default_msg"]) }}
@@ -408,8 +405,7 @@ action:
             entity_id: !input status_flag
             state: "resumable"
         then:
-          - stop: No notification is necessary
-
+          - stop: "No notification is necessary"
   - repeat:
       for_each: "{{ notify_targets }}"
       sequence:
